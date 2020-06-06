@@ -1,4 +1,4 @@
-# ./jqview
+# ./jqview [![Mentioned in Awesome jq](https://awesome.re/mentioned-badge.svg)](https://github.com/fiatjaf/awesome-jq)
 
 The simplest possible native GUI for inspecting JSON objects with [jq](https://stedolan.github.io/jq/manual/).
 
