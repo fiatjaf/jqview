@@ -2,7 +2,7 @@
 
 The simplest possible native GUI for inspecting JSON objects with [jq](https://stedolan.github.io/jq/manual/).
 
-Made with [fyne](https://fyne.io/) and [gojq](https://github.com/itchyny/gojq).
+Made with [Qt](https://qt.io/) and [gojq](https://github.com/itchyny/gojq).
 
 ## Usage
 
@@ -13,7 +13,7 @@ Made with [fyne](https://fyne.io/) and [gojq](https://github.com/itchyny/gojq).
 ![](screenshot1.png)
 
 ```
-~> echo '[{"name": "Mises"}, {"name": "Hayek"}, {"name": "Menger"}]' | jqview '.[].name
+~> echo '[{"name": "Mises"}, {"name": "Hayek"}, {"name": "Menger"}]' | jqview '.[].name'
 ```
 
 ![](screenshot2.png)

@@ -1,3 +1,12 @@
-dist: $(shell find . -name "*.go")
+dist: deploy/linux/jqview deploy/windows/jqview.exe
 	mkdir -p dist
-	gox -ldflags="-s -w" -osarch="darwin/amd64 linux/386 linux/amd64 linux/arm freebsd/amd64 windows/amd64 windows/386" -output="dist/jqview_{{.OS}}_{{.Arch}}"
+	cd deploy/linux && tar -czvf jqview_linux.tar.gz jqview
+	cd deploy/windows && tar -czvf jqview_windows.tar.gz jqview.exe
+	mv deploy/linux/jqview_linux.tar.gz dist/
+	mv deploy/windows/jqview_windows.tar.gz dist/
+
+deploy/linux/jqview: $(shell find . -name "*.go")
+	qtdeploy -ldflags="-s -w" -fast build desktop github.com/fiatjaf/jqview
+
+deploy/windows/jqview.exe: $(shell find . -name "*.go")
+	qtdeploy -ldflags="-s -w" -docker build windows_64_static

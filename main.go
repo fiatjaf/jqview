@@ -9,64 +9,106 @@ import (
 	"strings"
 	"time"
 
-	"fyne.io/fyne/app"
-	"fyne.io/fyne/widget"
 	"github.com/itchyny/gojq"
+	"github.com/mitchellh/go-homedir"
+	"github.com/therecipe/qt/widgets"
 )
 
-var a = app.New()
-var input *widget.Entry = widget.NewEntry()
-var filter *widget.Entry = widget.NewEntry()
-var output *widget.Entry = widget.NewEntry()
-
-func main() {
-	initialfilter := "."
-	initialcontent := `[{
+var filterValue = "."
+var inputValue = `[{
   "fruit": "mango"
 }, {
   "fruit": "banana"
 }]`
 
+var loadfileDialog *widgets.QFileDialog
+var input *widgets.QPlainTextEdit
+var filter *widgets.QLineEdit
+var output *widgets.QPlainTextEdit
+
+func main() {
+	app := widgets.NewQApplication(len(os.Args), os.Args)
+
 	if len(os.Args) > 1 {
-		initialfilter = os.Args[1]
+		filterValue = os.Args[1]
 	}
 	if len(os.Args) > 2 {
 		b, err := ioutil.ReadFile(os.Args[2])
 		if err != nil {
 			log.Fatal("failed to read " + os.Args[2] + " : " + err.Error())
 		}
-		initialcontent = string(b)
+		inputValue = string(b)
 	} else {
 		if m, _ := os.Stdin.Stat(); m.Mode()&os.ModeCharDevice != os.ModeCharDevice {
 			b, err := ioutil.ReadAll(os.Stdin)
 			if err == nil {
-				initialcontent = string(b)
+				inputValue = string(b)
 			}
 		}
 	}
 
-	input.SetText(strings.TrimSpace(initialcontent))
-	input.PlaceHolder = "JSON Input"
-	input.OnChanged = refresh
+	window := widgets.NewQMainWindow(nil, 0)
+	window.SetMinimumSize2(400, 500)
+	window.SetWindowTitle("jqview")
 
-	filter.SetText(initialfilter)
-	filter.PlaceHolder = "jq filter"
-	filter.OnChanged = refresh
+	dir, _ := homedir.Dir()
+	loadfileDialog = widgets.NewQFileDialog2(nil, "Select a JSON file", dir, "")
+	loadfileDialog.ConnectFileSelected(func(filepath string) {
+		b, err := ioutil.ReadFile(filepath)
+		if err != nil {
+			log.Print("failed to read " + filepath + " : " + err.Error())
+		} else {
+			input.SetPlainText(string(b))
+			go refresh()
+		}
+	})
 
-	w := a.NewWindow("jqview")
-	w.SetContent(widget.NewVBox(
-		newScrollWithMinHeight(input, 100),
-		filter,
-		output,
-	))
+	loadfileButton := widgets.NewQPushButton2("Load", nil)
+	loadfileButton.SetMaximumWidth(40)
+	loadfileButton.ConnectClicked(func(_ bool) {
+		loadfileDialog.Open(nil, "")
+	})
 
-	go refresh("")
+	input = widgets.NewQPlainTextEdit(nil)
+	input.SetPlaceholderText("JSON input")
+	input.SetPlainText(inputValue)
+	input.ConnectTextChanged(refresh)
 
-	w.ShowAndRun()
+	inputSection := widgets.NewQWidget(nil, 0)
+	inputSection.SetLayout(widgets.NewQHBoxLayout())
+	inputSection.SetMaximumHeight(150)
+	inputSection.Layout().AddWidget(loadfileButton)
+	inputSection.Layout().AddWidget(input)
+
+	filter = widgets.NewQLineEdit(nil)
+	filter.SetPlaceholderText("jq filter")
+	filter.SetText(filterValue)
+	filter.ConnectTextChanged(func(value string) {
+		filterValue = value
+		go refresh()
+	})
+
+	output = widgets.NewQPlainTextEdit(nil)
+	output.SetSizeAdjustPolicy(widgets.QAbstractScrollArea__AdjustToContents)
+	output.SetMinimumHeight(300)
+
+	widget := widgets.NewQWidget(nil, 0)
+	widget.SetLayout(widgets.NewQVBoxLayout())
+	widget.Layout().AddWidget(inputSection)
+	widget.Layout().AddWidget(filter)
+	widget.Layout().AddWidget(output)
+
+	window.Show()
+	window.SetCentralWidget(widget)
+
+	go refresh()
+
+	app.Exec()
 }
 
-func refresh(_ string) {
-	output.SetText(runJQ(context.Background(), input.Text, filter.Text))
+func refresh() {
+	inputValue = input.ToPlainText()
+	output.SetPlainText(runJQ(context.Background(), inputValue, filterValue))
 }
 
 func runJQ(
@@ -74,7 +116,7 @@ func runJQ(
 	input string,
 	filter string,
 ) string {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*20)
 	defer cancel()
 
 	var object interface{}
