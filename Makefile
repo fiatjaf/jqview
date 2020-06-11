@@ -1,9 +1,10 @@
 dist: deploy/linux/jqview deploy/windows/jqview.exe
 	mkdir -p dist
 	cd deploy/linux && tar -czvf jqview_linux.tar.gz jqview
-	cd deploy/windows && tar -czvf jqview_windows.tar.gz jqview.exe
 	mv deploy/linux/jqview_linux.tar.gz dist/
-	mv deploy/windows/jqview_windows.tar.gz dist/
+	rm -f deploy/windows/jqview_windows.zip
+	cd deploy/windows && zip jqview_windows *.exe
+	mv deploy/windows/jqview_windows.zip dist/
 
 deploy/linux/jqview: $(shell find . -name "*.go")
 	qtdeploy -ldflags="-s -w" -fast build desktop github.com/fiatjaf/jqview
