@@ -27,8 +27,4 @@ Made with [Qt](https://qt.io/) and [gojq](https://github.com/itchyny/gojq).
 
 ## Installation
 
-Download from [releases](https://github.com/fiatjaf/jqview/releases), or compile with
-
-```
-go get github.com/fiatjaf/jqview
-```
+Download from [releases](https://github.com/fiatjaf/jqview/releases), or compile using instructions from [this table](https://github.com/therecipe/qt/wiki/Deploying-Application).
